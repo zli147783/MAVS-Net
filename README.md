@@ -6,7 +6,7 @@ Official implementation of **MAVS-Net: Modality-Aware Visual-Spatial Fusion Netw
 ## Introduction
 
 **MAVS-Net** is a novel modality-aware visual-spatial fusion network for robust two-view correspondence pruning. It introduces **Optimal Transport** theory for the first time to enforce mathematically grounded cross-modal alignment between visual and spatial features.
-<div align=center><img src="assets/architecture.jpg" width=800/></div>
+<div align=center><img src="assets/architecture.jpg" width=400/></div>
 
 
 ### Key Contributions
