@@ -19,7 +19,7 @@ Official implementation of **MAVS-Net: Modality-Aware Visual-Spatial Fusion Netw
 
 ## Architecture
 
-<div align=center><img src="p1.jpg" width=800/></div>
+<div align=center><img src="assets/p1.jpg" width=800/></div>
 
 The MAVS-Net framework integrates four core components:
 
