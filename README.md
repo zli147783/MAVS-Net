@@ -162,19 +162,7 @@ MAVS-Net/
 └── weights/                   # Pre-trained weights
 ```
 
-## Citation
 
-If you find this work useful in your research, please consider citing:
-
-```bibtex
-@article{li2025mavs,
-  title={MAVS-Net: Modality-Aware Visual-Spatial Fusion Network for Two-View Correspondence Learning},
-  author={Li, Zihan and Zhao, Zhihao},
-  journal={IEEE Access},
-  year={2025},
-  doi={10.1109/ACCESS.2025.XXXXXXX}
-}
-```
 
 ## Acknowledgment
 
