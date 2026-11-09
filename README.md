@@ -1,59 +1,69 @@
-# MAVS-Net: Modality-Aware Visual-Spatial Fusion Network for Two-View Correspondence Learning
+# MAVS-Net
 
-Official implementation of **MAVS-Net: Modality-Aware Visual-Spatial Fusion Network for Two-View Correspondence Learning**.
+**Modality-Aware Visual-Spatial Fusion Network for Two-View Correspondence Learning**
 
+![Python 3.8](https://img.shields.io/badge/Python-3.8-3776AB?logo=python&logoColor=white)
+![PyTorch 1.7.1](https://img.shields.io/badge/PyTorch-1.7.1-EE4C2C?logo=pytorch&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-## Introduction
+Official PyTorch implementation of **MAVS-Net** for correspondence pruning and relative camera pose estimation.
 
-**MAVS-Net** is a novel modality-aware visual-spatial fusion network for robust two-view correspondence pruning. It introduces **Optimal Transport** theory for the first time to enforce mathematically grounded cross-modal alignment between visual and spatial features.
-<div align=center><img src="assets/architecture.jpg" width=400/></div>
+[Overview](#overview) · [Architecture](#architecture) · [Results](#results) · [Installation](#installation) · [Dataset](#dataset-preparation) · [Training](#training) · [Evaluation](#evaluation)
 
+## Overview
+
+MAVS-Net combines visual appearance, spatial geometry, and semantic cues to identify reliable correspondences between two views.
+
+<p align="center">
+  <img src="assets/architecture.jpg" alt="Overview of MAVS-Net" width="400">
+</p>
 
 ### Key Contributions
 
-- **Optimal Transport Cross-Modal Fusion (OT-CFM)**: Formulates visual-spatial feature interaction as an optimal assignment problem solved via the Sinkhorn algorithm, enforcing doubly stochastic alignment to suppress ambiguous cross-modal mappings.
-
-- **Semantic-Gated Graph Attention (SGGA)**: Leverages high-level semantic priors extracted by a Vision Transformer (ViT) to actively modulate KNN graph topologies via point-wise semantic affinity gating, resolving spatial-semantic conflicts where spatially adjacent correspondences belong to disparate physical entities.
-
-- **State-of-the-Art Performance**: Achieves **65.87%** and **23.91% mAP@5°** on YFCC100M and SUN3D unknown scenes respectively without RANSAC post-processing.
+- **Optimal Transport Cross-Modal Fusion (OT-CFM)** uses the Sinkhorn algorithm to align visual and spatial features under doubly stochastic constraints.
+- **Semantic-Gated Graph Attention (SGGA)** uses point-wise semantic affinity from a Vision Transformer (ViT) to gate edges in the spatial k-NN graph and reduce aggregation across semantically unrelated correspondences.
 
 ## Architecture
 
-<div align=center><img src="assets/p1.jpg" width=800/></div>
+<p align="center">
+  <img src="assets/p1.jpg" alt="MAVS-Net architecture for correspondence pruning and essential matrix estimation" width="800">
+</p>
 
-The MAVS-Net framework integrates four core components:
+| Component | Role |
+| :--- | :--- |
+| **VF-Extractor** | Extracts appearance cues from the image pair using ResNet34 and cross-attention. |
+| **Sem-Extractor** | Extracts semantic features using ViT and cross-attention to guide graph gating. |
+| **OT-CFM** | Aligns visual and spatial features with Sinkhorn-based optimal transport and learnable modality identity biases. |
+| **Semantic Context Transformer** | Combines local graph attention from SGGA with global context aggregation. |
 
-1. **VF-Extractor** (Visual Feature Extractor): ResNet34 backbone with cross-attention to extract environmental visual cues from two-view images.
+The Semantic Context Transformer refines correspondences in two stages.
 
-2. **Sem-Extractor** (Semantic Extractor): ViT backbone with cross-attention to capture high-level semantic priors that guide graph topology modulation.
-
-3. **OT-CFM** (Optimal Transport Cross-Modal Fusion): Sinkhorn-based optimal transport for mathematically rigorous alignment of visual and spatial features with learnable modality identity biases.
-
-4. **Semantic Context Transformer** (×2 iterations): Integrates SGGA-based local graph attention with global transformer context aggregation. The first iteration (k=9) prunes correspondences; the second (k=6) predicts inlier probabilities and estimates the essential matrix.
+1. **Stage 1 (`k = 9`)** prunes tentative correspondences.
+2. **Stage 2 (`k = 6`)** predicts inlier probabilities and estimates the essential matrix.
 
 ## Results
 
-### Camera Pose Estimation (mAP@5°)
+### Camera Pose Estimation · mAP@5° (%)
 
-| Method | YFCC100M Known | YFCC100M Unknown | SUN3D Known | SUN3D Unknown |
-|--------|:------------:|:--------------:|:---------:|:-----------:|
+MAVS-Net uses direct essential matrix estimation without RANSAC post-processing for the two unknown-scene results.
+
+| Method | YFCC100M (Known) | YFCC100M (Unknown) | SUN3D (Known) | SUN3D (Unknown) |
+| :--- | ---: | ---: | ---: | ---: |
 | VSFormer | 48.83 | 62.18 | 24.81 | 20.18 |
 | DeMo | 49.85 | 63.06 | 25.43 | 20.96 |
 | SC-Net | 51.74 | 64.38 | 26.95 | 22.74 |
 | **MAVS-Net (Ours)** | **52.93** | **65.87** | **28.42** | **23.91** |
 
-### Outlier Removal (F-score %)
+### Outlier Removal · F-score (%)
 
-| Method | YFCC100M Known | YFCC100M Unknown | SUN3D Known | SUN3D Unknown |
-|--------|:------------:|:--------------:|:---------:|:-----------:|
+| Method | YFCC100M (Known) | YFCC100M (Unknown) | SUN3D (Known) | SUN3D (Unknown) |
+| :--- | ---: | ---: | ---: | ---: |
 | SC-Net | 82.82 | 80.06 | 72.49 | 68.25 |
 | **MAVS-Net (Ours)** | **84.49** | **81.61** | **74.68** | **70.24** |
 
-## Requirements
+## Installation
 
-### Installation
-
-We recommend using Anaconda or Miniconda. To set up the environment:
+Use Anaconda or Miniconda and run these commands from the repository root.
 
 ```bash
 conda create -n mavs_net python=3.8 --yes
@@ -62,66 +72,67 @@ conda install pytorch==1.7.1 torchvision==0.8.2 cudatoolkit=11.0 -c pytorch --ye
 python -m pip install -r requirements.txt
 ```
 
-### Dataset
+## Dataset Preparation
 
-Follow the instructions provided [here](https://github.com/zjhthu/OANet) for downloading and preprocessing datasets.
+Download and preprocess the datasets following the [OANet instructions](https://github.com/zjhthu/OANet). Place the generated HDF5 files in `data_dump/` at the repository root.
 
-The packaged dataset should be placed in the `data_dump/` directory with the following structure:
+The YFCC100M files should have the following layout.
 
-```
-$MAVS-Net
-    |----data_dump
-      |----yfcc-sift-2000-train.hdf5
-      |----yfcc-sift-2000-val.hdf5
-      |----yfcc-sift-2000-test.hdf5
-      ...
+```text
+data_dump/
+├── yfcc-sift-2000-train.hdf5
+├── yfcc-sift-2000-val.hdf5
+└── yfcc-sift-2000-test.hdf5
 ```
 
-## Training & Evaluation
+## Training
 
-### 1. Single GPU Training
+Run the training commands from the repository root.
+
+### Single GPU
 
 ```bash
-# Train by single GPU
-nohup python -u train_single_gpu.py >./logs/mavs_net_yfcc.txt 2>&1 &
+mkdir -p logs
+nohup python -u train_single_gpu.py > ./logs/mavs_net_yfcc.txt 2>&1 &
 ```
 
-### 2. Multi GPU Training
+### Multi-GPU
 
 ```bash
-# Train by multiple GPUs
-CUDA_VISIBLE_DEVICES=0,1 nohup python -u -m torch.distributed.launch --nproc_per_node=2 --use_env train_multi_gpu.py >./logs/mavs_net_yfcc.txt 2>&1 &
+mkdir -p logs
+CUDA_VISIBLE_DEVICES=0,1 nohup python -u -m torch.distributed.launch \
+  --nproc_per_node=2 --use_env train_multi_gpu.py \
+  > ./logs/mavs_net_yfcc.txt 2>&1 &
 ```
 
-### 3. Training with Real-Time Monitoring
+### TensorBoard Monitoring
 
 ```bash
 python train_with_monitor.py --batch_size 20 --epochs 29
 ```
 
-TensorBoard is started automatically. View training curves at:
+The script starts TensorBoard automatically. To reopen the saved logs later, run `tensorboard --logdir=runs`.
+
+<details>
+<summary>Run monitored training in a Screen session</summary>
+
+Install Screen on Ubuntu or Debian with `sudo apt-get install screen`, then start a session.
 
 ```bash
-tensorboard --logdir=runs
-```
-
-### 4. Recommended: Train with Screen (Persistent Background Execution)
-
-```bash
-# Install screen if not already installed
-sudo apt-get install screen
-
-# Start a screen session
 screen -S mavs_net
-
-# Run training
-python train_with_monitor.py --batch_size 20 --epochs 29 --screen
-
-# Detach: Ctrl+A, then D
-# Reattach: screen -r mavs_net
 ```
 
-### 5. Evaluation
+Run the training command inside the session.
+
+```bash
+python train_with_monitor.py --batch_size 20 --epochs 29 --screen
+```
+
+Press **Ctrl+A**, then **D** to detach. Reattach with `screen -r mavs_net`.
+
+</details>
+
+## Evaluation
 
 ```bash
 python test.py
@@ -129,45 +140,23 @@ python test.py
 
 ## Project Structure
 
-```
-MAVS-Net/
-├── config.py                  # Configuration file
-├── train_single_gpu.py        # Single GPU training script
-├── train_multi_gpu.py         # Multi-GPU distributed training script
-├── train_with_monitor.py      # Training with real-time monitoring
-├── test.py                    # Evaluation script
-├── requirements.txt           # Python dependencies
-├── README.md                  # This file
-├── models/
-│   ├── mavs_net.py            # Core MAVS-Net architecture
-│   ├── loss.py                # Loss functions (classification + essential)
-│   ├── vanilla_transformer.py # Transformer layers
-│   ├── resnet34.py            # ResNet34 backbone
-│   └── __init__.py
-├── datasets/
-│   ├── CorresDataset.py       # Correspondence dataset loader
-│   └── __init__.py
-├── utils/
-│   ├── train_eval_utils.py    # Training and evaluation utilities
-│   ├── test_utils.py          # Testing utilities
-│   ├── tools.py               # Helper functions
-│   ├── distributed_utils.py   # Distributed training utilities
-│   └── __init__.py
-├── dump_match/                # Data preprocessing scripts
-├── data_dump/                 # Dataset directory
-├── logs/                      # Training logs
-├── runs/                      # TensorBoard logs
-├── checkpoint/                # Model checkpoints
-├── best_model/                # Best model weights
-└── weights/                   # Pre-trained weights
-```
+| Path | Purpose |
+| :--- | :--- |
+| [`config.py`](config.py) | Experiment configuration |
+| [`models/mavs_net.py`](models/mavs_net.py) | MAVS-Net architecture |
+| [`models/loss.py`](models/loss.py) | Classification and essential matrix losses |
+| [`datasets/`](datasets/) | Correspondence data loading |
+| [`dump_match/`](dump_match/) | Match extraction and data preprocessing |
+| [`utils/`](utils/) | Training, evaluation, and distributed utilities |
+| [`assets/`](assets/) | Figures used in this README |
+| `data_dump/` | Prepared HDF5 datasets |
+| `logs/`, `runs/` | Training and TensorBoard logs |
+| `checkpoint/`, `best_model/`, `weights/` | Checkpoints, best models, and pretrained weights |
 
+## Acknowledgments
 
-
-## Acknowledgment
-
-This project builds upon excellent prior works including [OANet](https://github.com/zjhthu/OANet), [CLNet](https://github.com/sailor-z/CLNet), and [VSFormer](https://arxiv.org/abs/2312.08774). We thank the authors for their contributions to the community.
+This implementation builds on [OANet](https://github.com/zjhthu/OANet), [CLNet](https://github.com/sailor-z/CLNet), and [VSFormer](https://arxiv.org/abs/2312.08774).
 
 ## License
 
-This project is released under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the [MIT License](LICENSE).
